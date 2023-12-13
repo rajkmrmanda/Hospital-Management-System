@@ -1,0 +1,53 @@
+version: "3"
+services:
+
+  mysqldb:
+    image: mysql:latest
+    restart: unless-stopped
+    environment:
+      - MYSQL_DATABASE=admin
+    ports:
+      - 3307:3306
+    volumes:
+      - db-config:/etc/mysql
+      - db-data:/var/lib/mysql-files
+      - ./db/backup/files/:/data_backup/data
+
+  ui:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.client
+    ports:
+      - 3000:3000
+    container_name: client
+    networks:
+      - mern-stack-net
+    volumes:
+      - ./client:/usr/app/client
+      - ./client/public:/usr/app/public
+    depends_on:
+      - api
+    stdin_open: true
+    tty: true
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.server
+    ports:
+      - 3080:3080
+    container_name: backend
+    networks:
+      - mern-stack-net
+    volumes:
+      - ./server:/usr/app/server
+    depends_on:
+      - mysqldb
+
+networks:
+  mern-stack-net:
+    driver: bridge
+
+volumes:
+  db-config:
+  db-data:
